@@ -8,7 +8,7 @@ app.use(express.json());
 
 app.post('/api/generate', async (req, res) => {
   const { destination, duration, vibe } = req.body;
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : '';
 
   if (!apiKey) {
     console.error("Missing GEMINI_API_KEY in environment variables.");
@@ -23,18 +23,21 @@ app.post('/api/generate', async (req, res) => {
   4. 📸 **Photo Spot & Pro-Tip**: 1 photogenic spot and 1 local tip.`;
 
   try {
-    // Calling the stable Gemini v1beta endpoint
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
+    let url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`;
+    let headers = { 'Content-Type': 'application/json' };
+
+    // If credential starts with AQ (Access Token / OAuth credential), use Bearer auth
+    if (apiKey.startsWith('AQ')) {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    } else {
+      url += `?key=${apiKey}`;
+    }
 
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json' 
-      },
+      headers: headers,
       body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }]
+        contents: [{ parts: [{ text: prompt }] }]
       })
     });
 
