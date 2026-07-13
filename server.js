@@ -23,25 +23,32 @@ app.post('/api/generate', async (req, res) => {
   4. 📸 **Photo Spot & Pro-Tip**: 1 photogenic spot and 1 local tip.`;
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    // Calling the stable Gemini v1beta endpoint
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
+
+    const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json' 
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
+        contents: [{
+          parts: [{ text: prompt }]
+        }]
       })
     });
 
     const data = await response.json();
-    
+
     if (data.error) {
-      console.error("Gemini API Error:", data.error);
-      return res.status(500).json({ error: data.error.message });
+      console.error("Gemini API Error details:", JSON.stringify(data.error));
+      return res.status(data.error.code || 500).json({ error: data.error.message });
     }
 
     res.json(data);
   } catch (error) {
-    console.error("Server Error:", error);
-    res.status(500).json({ error: "Server error calling Gemini API." });
+    console.error("Server Fetch Error:", error);
+    res.status(500).json({ error: "Internal server error connecting to Gemini API." });
   }
 });
 
